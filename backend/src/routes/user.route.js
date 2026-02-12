@@ -3,6 +3,9 @@ import {
   getFeed,
   getMe,
   getMyMatches,
+  getReceivedRequests,
+  getSentRequests,
+  respondToRequest,
   swipeUser,
   updatePassword,
   updateProfile,
@@ -24,5 +27,8 @@ userRoute.patch("/me/password", protect, updatePassword);
 userRoute.get("/feed", protect, getFeed);
 userRoute.post("/swipe", protect, swipeLimiter, swipeUser);
 userRoute.get("/matches", protect, getMyMatches);
+userRoute.get("/requests", getReceivedRequests);
+userRoute.get("/sentrequests", getSentRequests);
+userRoute.patch("/response", respondToRequest);
 
 export default userRoute;
