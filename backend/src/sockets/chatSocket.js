@@ -1,5 +1,6 @@
 import Match from "../models/match.model.js";
 import Messages from "../models/message.model.js";
+import jwt from "jsonwebtoken";
 
 //tracking user online / offline status
 const onlineUsers = new Map();
@@ -26,6 +27,8 @@ export const chatSocket = (io) => {
 
   // This event triggers when a user connects via socket
   io.on("connection", (socket) => {
+    socket.join(socket.userId);
+
     console.log("user connected:", socket.userId);
     onlineUsers.set(socket.userId, socket.id);
 
@@ -115,7 +118,7 @@ export const chatSocket = (io) => {
         content,
       });
 
-      io.to(matchId).emit("recive-message", message); // It's just in-memory grouping.
+      io.to(matchId).emit("receive-message", message); // It's just in-memory grouping.
     });
     // This event triggers when user disconnects from socket
     socket.on("disconnect", () => {

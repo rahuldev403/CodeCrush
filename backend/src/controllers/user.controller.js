@@ -2,6 +2,8 @@ import Match from "../models/match.model.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import generateCompatibility from "../services/ai.service.js";
+import Connection from "../models/connection.model.js";
+import { getIO } from "../socket.js";
 
 export const getMe = async (req, res) => {
   try {
@@ -137,16 +139,29 @@ export const getFeed = async (req, res) => {
       users: req.userId,
     });
 
-    const matechedUserIds = matches.map((match) =>
+    const matchedUserIds = matches.map((match) =>
       match.users.find((id) => id.toString() != req.userId),
     );
 
-    const excludedUsers = [
-      req.userId,
-      ...currentUser.swipedLeft,
-      ...currentUser.swipedRight,
-      matechedUserIds,
-    ];
+    const connections = await Connection.find({
+      $or: [{ sender: req.userId }, { receiver: req.userId }],
+    });
+
+    const connectionUserIds = connections.map((conn) => {
+      if (conn.sender.toString() === req.userId) {
+        return conn.receiver;
+      } else {
+        return conn.sender;
+      }
+    });
+
+    const excludedUsers = [req.userId, ...connectionUserIds, ...matchedUserIds];
+
+    const totalUsers = await User.countDocuments({
+      _id: { $nin: excludedUsers },
+      isVerified: true,
+    });
+
     const feedUsers = await User.find({
       _id: { $nin: excludedUsers }, //“Find users whose ID is NOT IN this list.”
       isVerified: true,
@@ -175,17 +190,25 @@ export const getFeed = async (req, res) => {
 export const swipeUser = async (req, res) => {
   try {
     const { targetUserId, action } = req.body;
+
     if (!targetUserId || !action) {
       return res.status(400).json({
         message: "Target user and action required",
       });
     }
+
     if (!["right", "left"].includes(action)) {
       return res.status(400).json({
         message: "Invalid action",
       });
     }
-    const currentUser = await User.findById(req.userId);
+
+    if (targetUserId === req.userId) {
+      return res.status(400).json({
+        message: "Cannot swipe yourself",
+      });
+    }
+
     const targetUser = await User.findById(targetUserId);
 
     if (!targetUser) {
@@ -194,49 +217,61 @@ export const swipeUser = async (req, res) => {
       });
     }
 
-    if (action == "right") {
-      const isMutual = targetUser.swipedRight.includes(req.userId);
+    if (action === "right") {
+      // 🔥 Check if reverse pending exists
+      // const reverseRequest = await Connection.findOne({
+      //   sender: targetUserId,
+      //   receiver: req.userId,
+      //   status: "PENDING",
+      // });
 
-      if (isMutual) {
-        const existingMatch = await Match.findOne({
-          users: { $all: [req.userId, targetUserId] },
-        });
+      // if (reverseRequest) {
+      //   // Mutual swipe → accept
+      //   reverseRequest.status = "ACCEPTED";
+      //   await reverseRequest.save();
 
-        if (!existingMatch) {
-          const match = await Match.create({
-            users: [req.userId, targetUserId],
-          });
+      //   const match = await Match.create({
+      //     users: [req.userId, targetUserId],
+      //   });
 
-          const compatibility = await generateCompatibility(
-            req.userId,
-            targetUserId,
-          );
+      //   return res.status(200).json({
+      //     message: "It's a match!",
+      //     matchId: match._id,
+      //   });
+      // }
 
-          match.compatibilityScore = compatibility.score;
-          match.compatibilitySummary = compatibility.summary;
+      // Check if already sent
+      const alreadySent = await Connection.findOne({
+        sender: req.userId,
+        receiver: targetUserId,
+      });
 
-          await match.save();
-        }
-
-        return res.status(200).json({
-          message: "It's a match!",
-          match: true,
+      if (alreadySent) {
+        return res.status(400).json({
+          message: "Request already exists",
         });
       }
 
-      currentUser.swipedRight.push(targetUserId);
-      await currentUser.save();
+      // Create new pending request
+      await Connection.create({
+        sender: req.userId,
+        receiver: targetUserId,
+        status: "PENDING",
+      });
+
+      const io = getIO();
+      io.to(targetUserId.toString()).emit("new-connection-request", {
+        fromUser: req.userId,
+      });
 
       return res.status(200).json({
-        message: "Swiped right",
-        match: false,
+        message: "Connection request sent",
       });
     }
 
-    if (action == "left") {
-      currentUser.swipedLeft.push(targetUser);
+    if (action === "left") {
       return res.status(200).json({
-        message: "Swiped left",
+        message: "User skipped",
       });
     }
   } catch (error) {
@@ -254,11 +289,11 @@ export const getMyMatches = async (req, res) => {
     const matches = await Match.find({
       users: req.userId,
     })
-      .populate("users", "-password refreshToken")
+      .populate("users", "-password -refreshToken")
       .sort({ createdAt: -1 });
 
     const fromattedMatches = matches.map((match) => {
-      const otherUsers = match.find(
+      const otherUsers = match.users.find(
         (user) => user._id.toString() != req.userId,
       );
 
@@ -273,6 +308,129 @@ export const getMyMatches = async (req, res) => {
     res.status(200).json({
       count: fromattedMatches.length,
       matches: fromattedMatches,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+export const respondToRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { action } = req.body;
+
+    if (!["ACCEPTED", "REJECTED"].includes(action)) {
+      return res.status(400).json({
+        message: "Invalid action",
+      });
+    }
+
+    const connection = await Connection.findById(requestId);
+    if (!connection) {
+      return res.status(404).json({
+        message: "Request not found",
+      });
+    }
+
+    if (connection.receiver.toString() !== req.userId) {
+      return res.status(403).json({
+        message: "Not authorized",
+      });
+    }
+
+    if (connection.status !== "PENDING") {
+      return res.status(400).json({
+        message: "Request already handled",
+      });
+    }
+
+    connection.status = action;
+    await connection.save();
+
+    if (action == "ACCEPTED") {
+      const match = await Match.create({
+        users: [connection.sender, connection.receiver],
+      });
+      const matchId = match._id;
+      const senderUser = await User.findById(connection.sender);
+      const receiverUser = await User.findById(connection.receiver);
+
+      const compatibility = await generateCompatibility(
+        senderUser,
+        receiverUser,
+      );
+
+      match.compatibilityScore = compatibility.score;
+      match.compatibilitySummary = compatibility.summary;
+
+      await match.save();
+      const io = getIO();
+
+      io.to(connection.sender.toString()).emit("connection-accepted", {
+        matchId,
+        byUser: req.userId,
+      });
+
+      res.status(200).json({
+        message: `Request ${action.toLowerCase()}`,
+        matchId,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+export const getReceivedRequests = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await Connection.countDocuments({
+      receiver: req.userId,
+      status: "PENDING",
+    });
+
+    const requests = await Connection.find({
+      receiver: req.userId,
+      status: "PENDING",
+    })
+      .populate("sender", "-password -refreshToken")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({
+      page,
+      limit,
+      totalRequests: total,
+      totalPages: Math.ceil(total / limit),
+      requests,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+export const getSentRequests = async (req, res) => {
+  try {
+    const requests = await Connection.find({
+      sender: req.userId,
+      status: "PENDING",
+    }).populate("receiver", "-password -refreshToken");
+
+    res.status(200).json({
+      count: requests.length,
+      requests,
     });
   } catch (error) {
     res.status(500).json({

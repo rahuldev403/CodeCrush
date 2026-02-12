@@ -63,19 +63,19 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
-    swipedRight: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
+    // swipedRight: [
+    //   {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "User",
+    //   },
+    // ],
 
-    swipedLeft: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
+    // swipedLeft: [
+    //   {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "User",
+    //   },
+    // ],
     refreshToken: {
       type: String,
     },
@@ -92,7 +92,7 @@ const userSchema = new mongoose.Schema(
     // otpExpires: {
     //   type: Date,
     // },
-    
+
     avatar: {
       type: String,
       default: "",
