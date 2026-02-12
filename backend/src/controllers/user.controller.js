@@ -1,3 +1,4 @@
+import Match from "../models/match.model.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 
@@ -116,3 +117,123 @@ export const updatePassword = async (req, res) => {
     });
   }
 };
+
+//getting user feild
+export const getFeed = async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.userId);
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "user not found!" });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const skip = (page - 1) * limit;
+
+    const matches = await Match.find({
+      users: req.userId,
+    });
+
+    const matechedUserIds = matches.map((match) =>
+      match.users.find((id) => id.toString() != req.userId),
+    );
+
+    const excludedUsers = [
+      req.userId,
+      ...currentUser.swipedLeft,
+      ...currentUser.swipedRight,
+      matechedUserIds,
+    ];
+    const feedUsers = await User.find({
+      _id: { $nin: excludedUsers }, //“Find users whose ID is NOT IN this list.”
+      isVerified: true,
+    })
+      .select("-password -refreshToken")
+      .sort({ createdAt: -1 }) // without this our pagination will work un predicatable
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({
+      page,
+      limit,
+      totalUsers,
+      totalPages: Math.ceil(totalUsers / limit),
+      users: feedUsers,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+//swipe user controller
+export const swipeUser = async (req, res) => {
+  try {
+    const { targetUserId, action } = req.body;
+    if (!targetUserId || !action) {
+      return res.status(400).json({
+        message: "Target user and action required",
+      });
+    }
+    if (!["right", "left"].includes(action)) {
+      return res.status(400).json({
+        message: "Invalid action",
+      });
+    }
+    const currentUser = await User.findById(req.userId);
+    const targetUser = await User.findById(targetUserId);
+
+    if (!targetUser) {
+      return res.status(404).json({
+        message: "Target user not found",
+      });
+    }
+
+    if (action == "right") {
+      const isMutual = targetUser.swipedRight.includes(req.userId);
+
+      if (isMutual) {
+        const existingMatch = await Match.findOne({
+          users: { $all: [req.userId, targetUserId] },
+        });
+
+        if (!existingMatch) {
+          await Match.create({
+            users: [req.userId, targetUserId],
+          });
+        }
+
+        return res.status(200).json({
+          message: "It's a match!",
+          match: true,
+        });
+      }
+
+      currentUser.swipedRight.push(targetUserId);
+      await currentUser.save();
+
+      return res.status(200).json({
+        message: "Swiped right",
+        match: false,
+      });
+    }
+
+    if (action == "left") {
+      currentUser.swipedLeft.push(targetUser);
+      return res.status(200).json({
+        message: "Swiped left",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+//get match feild

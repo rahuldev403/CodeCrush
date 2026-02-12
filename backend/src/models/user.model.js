@@ -79,12 +79,7 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
     },
-    matches: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
+
     // isVerified: {
     //   type: Boolean,
     //   default: false,
@@ -97,6 +92,7 @@ const userSchema = new mongoose.Schema(
     // otpExpires: {
     //   type: Date,
     // },
+    
     avatar: {
       type: String,
       default: "",
