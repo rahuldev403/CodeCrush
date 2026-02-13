@@ -270,10 +270,6 @@ Sonner library integrated with custom styling for pixelated theme. Notifications
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
 ## 👨‍💻 Author
 
 Built with 💖 by developers, for developers.
