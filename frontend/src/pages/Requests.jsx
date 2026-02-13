@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import AppShell from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -46,8 +47,25 @@ const Requests = () => {
     try {
       await respondToRequest(requestId, action);
       setRequests((prev) => prev.filter((req) => req._id !== requestId));
+      
+      if (action === "accept") {
+        toast.success("Request accepted! 🎉", {
+          description: "You've made a new connection",
+          duration: 3000,
+        });
+      } else {
+        toast.info("Request declined", {
+          description: "The request was removed",
+          duration: 2000,
+        });
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update request.");
+      const errorMsg = err.response?.data?.message || "Failed to update request.";
+      setError(errorMsg);
+      toast.error("Action failed", {
+        description: errorMsg,
+        duration: 3000,
+      });
     } finally {
       setActingOn(null);
     }

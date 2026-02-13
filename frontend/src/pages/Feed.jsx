@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import AppShell from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,11 +57,29 @@ const Feed = () => {
     try {
       await swipeUser({ targetUserId: currentProfile._id, action });
       setFeed((prev) => prev.slice(1));
+
+      if (action === "right") {
+        toast.success("Liked! ❤️", {
+          description: `You liked ${currentProfile.name}`,
+          duration: 2000,
+        });
+      } else {
+        toast.info("Passed", {
+          description: "Moving to next profile",
+          duration: 1500,
+        });
+      }
+
       if (feed.length <= 1 && page < totalPages) {
         setPage((prev) => prev + 1);
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Swipe failed.");
+      const errorMsg = err.response?.data?.message || "Swipe failed.";
+      setError(errorMsg);
+      toast.error("Swipe failed", {
+        description: errorMsg,
+        duration: 3000,
+      });
     } finally {
       setIsSwiping(false);
     }

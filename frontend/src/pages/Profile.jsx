@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import AppShell from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -240,8 +241,18 @@ const Profile = () => {
       setForm((prev) => ({ ...prev, avatar: avatarUrl }));
       setAvatarDataUrl("");
       setSuccess("Profile updated.");
+      toast.success("Profile saved! 💾", {
+        description: "Your profile has been updated successfully",
+        duration: 3000,
+      });
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update profile.");
+      const errorMsg =
+        err.response?.data?.message || "Failed to update profile.";
+      setError(errorMsg);
+      toast.error("Save failed", {
+        description: errorMsg,
+        duration: 3000,
+      });
     } finally {
       setIsSaving(false);
     }
@@ -256,8 +267,18 @@ const Profile = () => {
       await updatePassword(passwords);
       setPasswords({ currentPassword: "", newPassword: "" });
       setSuccess("Password updated.");
+      toast.success("Password changed! 🔑", {
+        description: "Your password has been updated successfully",
+        duration: 3000,
+      });
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update password.");
+      const errorMsg =
+        err.response?.data?.message || "Failed to update password.";
+      setError(errorMsg);
+      toast.error("Update failed", {
+        description: errorMsg,
+        duration: 3000,
+      });
     } finally {
       setIsUpdatingPassword(false);
     }

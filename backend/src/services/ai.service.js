@@ -90,7 +90,24 @@ export const generateCompatibilityAsync = (match, io, userA, userB) => {
       console.log(`✅ Compatibility generated for match ${matchId}`);
     } catch (error) {
       console.error("❌ AI compatibility generation failed:", error.message);
-      // Silently fail - don't interrupt user experience
+
+      const matchId = match._id.toString();
+
+      // Emit error to both users
+      io.to(matchId).emit("compatibility-error", {
+        matchId,
+        error: "Failed to generate compatibility score",
+      });
+
+      io.to(match.users[0].toString()).emit("compatibility-error", {
+        matchId,
+        error: "Failed to generate compatibility score",
+      });
+
+      io.to(match.users[1].toString()).emit("compatibility-error", {
+        matchId,
+        error: "Failed to generate compatibility score",
+      });
     }
   })();
 };

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { toast } from "sonner";
 import AppShell from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +13,7 @@ const Chat = () => {
   const { matchId } = useParams();
   const socketRef = useRef(null);
   const typingTimeout = useRef(null);
+  const messagesEndRef = useRef(null);
 
   const [messages, setMessages] = useState([]);
   const [currentUserId, setCurrentUserId] = useState("");
@@ -97,7 +99,9 @@ const Chat = () => {
     if (!message) return;
 
     if (!socketRef.current) {
-      setError("Socket not connected. Try again.");
+      toast.error("Not connected", {
+        description: "Socket connection lost. Try refreshing.",
+      });
       return;
     }
 
@@ -111,8 +115,18 @@ const Chat = () => {
     try {
       await deleteMessage(messageId);
       setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
+      toast.success("Message deleted", {
+        description: "Your message was removed",
+        duration: 2000,
+      });
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to delete message.");
+      const errorMsg =
+        err.response?.data?.message || "Failed to delete message.";
+      setError(errorMsg);
+      toast.error("Delete failed", {
+        description: errorMsg,
+        duration: 3000,
+      });
     } finally {
       setDeletingId(null);
     }
@@ -131,6 +145,11 @@ const Chat = () => {
       socketRef.current?.emit("stop-typing", matchId);
     }, 900);
   };
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
   return (
     <AppShell
@@ -157,9 +176,9 @@ const Chat = () => {
       ) : null}
 
       {/* Chat container - full height layout */}
-      <div className="flex h-[calc(100vh-120px)] flex-col gap-4">
+      <div className="flex h-[calc(100vh-120px)] flex-col">
         {/* Messages area - scrollable */}
-        <Card className="flex-1 border-4 border-primary shadow-xl overflow-hidden">
+        <Card className="flex-1 border-4 border-primary shadow-xl overflow-hidden mb-4">
           <CardContent className="custom-scrollbar h-full overflow-y-auto p-6 flex flex-col gap-3">
             {loading ? (
               <p className="font-mono text-sm text-muted-foreground">
@@ -250,11 +269,12 @@ const Chat = () => {
                 ● Typing...
               </p>
             ) : null}
+            <div ref={messagesEndRef} />
           </CardContent>
         </Card>
 
         {/* Input area - fixed at bottom */}
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <Input
             placeholder="Write a message..."
             value={messageInput}
