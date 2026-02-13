@@ -7,11 +7,11 @@ const Landing = () => {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
       <header className="border-b-4 border-primary bg-card shadow-lg">
-        <div className="mx-auto max-w-6xl px-6 py-6 flex items-center justify-between">
+        <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between ">
           <img
             src="/codecrush-text.png"
             alt="CodeCrush"
-            className="h-8 w-auto"
+            className="h-12 border-2 rounded-lg"
             style={{ imageRendering: "pixelated" }}
           />
           <div className="flex items-center gap-3">
@@ -49,8 +49,14 @@ const Landing = () => {
 
             {/* Hero Text */}
             <div className="space-y-6 text-center md:text-left">
-              <div className="inline-block border-4 border-accent bg-accent/20 px-4 py-2 font-mono text-sm font-bold text-accent-foreground shadow-md">
-                🚀 Find Your Dev Match
+              <div className="inline-flex items-center gap-2 border-4 border-accent bg-accent/20 px-4 py-2 font-mono text-sm font-bold text-accent-foreground shadow-md">
+                <img
+                  src="/find.png"
+                  alt="Find"
+                  className="h-5 w-5"
+                  style={{ imageRendering: "pixelated" }}
+                />
+                Find Your Dev Match
               </div>
               <h1 className="font-mono text-5xl sm:text-6xl font-bold tracking-tight text-foreground">
                 Connect with <span className="text-primary">Developers</span>
@@ -85,7 +91,14 @@ const Landing = () => {
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="border-4 border-primary shadow-xl">
               <CardContent className="p-6 space-y-3 text-center">
-                <div className="text-5xl">🎯</div>
+                <div className="flex justify-center">
+                  <img
+                    src="/smart-matching.png"
+                    alt="Smart Matching"
+                    className="h-16 w-16"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                </div>
                 <h3 className="font-mono text-lg font-bold text-foreground">
                   Smart Matching
                 </h3>
@@ -97,7 +110,14 @@ const Landing = () => {
 
             <Card className="border-4 border-primary shadow-xl">
               <CardContent className="p-6 space-y-3 text-center">
-                <div className="text-5xl">💫</div>
+                <div className="flex justify-center">
+                  <img
+                    src="/chat.png"
+                    alt="Real-time Chat"
+                    className="h-16 w-16"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                </div>
                 <h3 className="font-mono text-lg font-bold text-foreground">
                   Real-time Chat
                 </h3>
@@ -109,7 +129,14 @@ const Landing = () => {
 
             <Card className="border-4 border-primary shadow-xl">
               <CardContent className="p-6 space-y-3 text-center">
-                <div className="text-5xl">👥</div>
+                <div className="flex justify-center">
+                  <img
+                    src="/build_togather.png"
+                    alt="Build Together"
+                    className="h-16 w-16"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                </div>
                 <h3 className="font-mono text-lg font-bold text-foreground">
                   Build Together
                 </h3>
@@ -121,12 +148,21 @@ const Landing = () => {
           </div>
 
           {/* CTA */}
-          <Card className="border-4 border-accent bg-gradient-to-br from-accent/10 to-primary/5 shadow-xl">
-            <CardContent className="p-8 text-center space-y-4">
-              <h2 className="font-mono text-2xl font-bold text-foreground">
+          <Card
+            className="border-4 border-accent shadow-xl relative overflow-hidden"
+            style={{
+              backgroundImage: "url('/banner.jpg')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              imageRendering: "pixelated",
+            }}
+          >
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+            <CardContent className="relative z-10 p-8 text-center space-y-4">
+              <h2 className="font-mono text-2xl font-bold text-primary">
                 Ready to find your dev match?
               </h2>
-              <p className="font-mono text-sm text-muted-foreground">
+              <p className="font-mono text-sm text-foreground">
                 Join thousands of developers building amazing things together
               </p>
               <Link to="/register">

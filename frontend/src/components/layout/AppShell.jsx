@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/api/auth";
+import { useSocketNotifications } from "@/hooks/useSocketNotifications";
 
 const links = [
   { to: "/feed", label: "Feed", icon: "/feed.png" },
@@ -15,6 +16,9 @@ const AppShell = ({ title, subtitle, actions, children }) => {
   const navigate = useNavigate();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Initialize socket notifications
+  useSocketNotifications();
 
   const handleSignOut = async () => {
     if (isSigningOut) return;
