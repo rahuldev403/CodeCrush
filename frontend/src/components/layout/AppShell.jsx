@@ -9,6 +9,7 @@ const links = [
   { to: "/feed", label: "Feed", icon: "/feed.png" },
   { to: "/requests", label: "Requests", icon: "/requests.png" },
   { to: "/matches", label: "Matches", icon: "/match.png" },
+  { to: "/issues", label: "Issues", icon: "/feed.png" },
   { to: "/profile", label: "Profile", icon: "/user.png" },
 ];
 
@@ -17,7 +18,6 @@ const AppShell = ({ title, subtitle, actions, children }) => {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Initialize socket notifications
   useSocketNotifications();
 
   const handleSignOut = async () => {
@@ -27,7 +27,6 @@ const AppShell = ({ title, subtitle, actions, children }) => {
     try {
       await logout();
     } catch (error) {
-      // Redirect even if logout fails to clear the UI state.
     } finally {
       setIsSigningOut(false);
       navigate("/");

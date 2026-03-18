@@ -56,3 +56,8 @@ export const respondToRequest = async (requestId, action) => {
   });
   return unwrapResponse(data);
 };
+
+export const removeConnection = async (matchId) => {
+  const { data } = await apiClient.delete(`/user/matches/${matchId}`);
+  return unwrapResponse(data);
+};

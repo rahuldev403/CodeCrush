@@ -12,6 +12,16 @@ export const register = async (payload) => {
   return unwrapResponse(data);
 };
 
+export const verifyRegistration = async (payload) => {
+  const { data } = await apiClient.post("/auth/verify-registration", payload);
+  return unwrapResponse(data);
+};
+
+export const resendOtp = async (payload) => {
+  const { data } = await apiClient.post("/auth/resend-otp", payload);
+  return unwrapResponse(data);
+};
+
 export const logout = async () => {
   const { data } = await apiClient.post("/auth/logout");
   return unwrapResponse(data);
