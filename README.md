@@ -1,116 +1,55 @@
-# 💖 CodeCrush
+# CodeCrush
 
-> A pixelated, bubblegum-themed dating platform for developers. Find your perfect dev match!
+CodeCrush is a full-stack dating app for developers with swipe-style discovery, real-time chat, and AI-powered compatibility.
 
-CodeCrush is a modern full-stack dating application designed specifically for developers. Swipe through profiles, connect with like-minded coders, and chat in real-time with your matches.
+## Landing Page
 
-## ✨ Features
+![CodeCrush landing page](frontend/public/image.png)
 
-- 🎨 **Pixelated Bubblegum Aesthetic** - Retro-inspired design with custom pixel art assets
-- 👤 **Developer Profiles** - Showcase your tech stack, experience level, and bio
-- 💫 **Smart Matching** - AI-powered compatibility scoring using OpenAI
-- ↔️ **Swipeable Feed** - Tinder-style interface for browsing developers
-- 💬 **Real-time Chat** - Instant messaging with Socket.io
-- 🔔 **Live Notifications** - Get notified of matches, messages, and connection requests
-- 🔐 **Secure Authentication** - JWT-based auth with HTTP-only cookies
-- 📸 **Image Uploads** - Cloudinary integration for profile pictures
-- 🎯 **Connection Management** - Send, accept, or reject connection requests
+## Highlights
 
-## 🛠️ Tech Stack
+- Developer-focused profiles and onboarding
+- Match flow with requests, accepts, and rejects
+- Real-time chat via Socket.io
+- AI compatibility scoring (OpenAI)
+- JWT auth with secure cookies
 
-### Frontend
+## Tech Stack
 
-- **React 19** - UI library
-- **Vite** - Build tool and dev server
-- **React Router v7** - Client-side routing
-- **Tailwind CSS** - Utility-first styling
-- **Framer Motion** - Animations
-- **Socket.io Client** - Real-time communication
-- **Sonner** - Toast notifications
-- **Axios** - HTTP client
-- **shadcn/ui** - UI component library
+- Frontend: React, Vite, Tailwind CSS, React Router, Socket.io client
+- Backend: Node.js, Express, MongoDB, Mongoose, Socket.io
+- Integrations: Cloudinary, OpenAI
 
-### Backend
+## Quick Start
 
-- **Node.js** - Runtime environment
-- **Express 5** - Web framework
-- **MongoDB** - Database
-- **Mongoose** - ODM for MongoDB
-- **Socket.io** - WebSocket server
-- **JWT** - Authentication tokens
-- **bcrypt** - Password hashing
-- **Cloudinary** - Image storage
-- **OpenAI API** - AI compatibility scoring
-- **Express Rate Limit** - API rate limiting
-
-## 📁 Project Structure
-
-```
-DevTinder/
-├── backend/
-│   ├── src/
-│   │   ├── config/          # Database & service configs
-│   │   ├── controllers/     # Route controllers
-│   │   ├── middlewares/     # Auth & validation middleware
-│   │   ├── models/          # Mongoose schemas
-│   │   ├── routes/          # API routes
-│   │   ├── scripts/         # Seed scripts
-│   │   ├── services/        # Business logic (AI service)
-│   │   ├── sockets/         # Socket.io handlers
-│   │   ├── index.js         # App entry point
-│   │   └── socket.js        # Socket instance manager
-│   └── package.json
-├── frontend/
-│   ├── public/              # Static assets (PNG icons)
-│   ├── src/
-│   │   ├── api/             # API client functions
-│   │   ├── assets/          # Images & assets
-│   │   ├── components/      # React components
-│   │   │   ├── auth/        # Auth-related components
-│   │   │   ├── layout/      # Layout components (AppShell)
-│   │   │   └── ui/          # Reusable UI components
-│   │   ├── contexts/        # React contexts (LoadingContext)
-│   │   ├── hooks/           # Custom hooks (useSocketNotifications)
-│   │   ├── lib/             # Utilities & helpers
-│   │   ├── pages/           # Route pages
-│   │   ├── routes/          # Router configuration
-│   │   ├── App.jsx          # Root component
-│   │   └── main.jsx         # React entry point
-│   └── package.json
-└── README.md
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js (v18 or higher)
-- MongoDB (local or Atlas)
-- npm or yarn
-- Cloudinary account (for image uploads)
-- OpenAI API key (for compatibility scoring)
-
-### Installation
-
-1. **Clone the repository**
+1. Install dependencies:
 
    ```bash
-   git clone <repository-url>
-   cd DevTinder
+   cd backend && npm install
+   cd ../frontend && npm install
    ```
 
-2. **Install backend dependencies**
+2. Create `backend/.env`:
+
+   ```env
+   PORT=8000
+   CLIENT_URL=http://localhost:5173
+   MONGODB_URI=your_mongodb_uri
+   JWT_SECRET=your_jwt_secret
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+   OPENAI_API_KEY=your_openai_api_key
+   ```
+
+3. Run the app:
 
    ```bash
-   cd backend
-   npm install
+   cd backend && npm run dev
+   cd ../frontend && npm run dev
    ```
 
-3. **Install frontend dependencies**
-   ```bash
-   cd ../frontend
-   npm install
-   ```
+## Scripts
 
 ### Environment Variables
 
