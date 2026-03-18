@@ -88,7 +88,7 @@ const Landing = () => {
           </div>
 
           {/* Features */}
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="border-4 border-primary shadow-xl">
               <CardContent className="p-6 space-y-3 text-center">
                 <div className="flex justify-center">
@@ -145,7 +145,84 @@ const Landing = () => {
                 </p>
               </CardContent>
             </Card>
+
+            <Card className="border-4 border-accent shadow-xl md:col-span-2 lg:col-span-1">
+              <CardContent className="p-6 space-y-3 text-center">
+                <div className="flex justify-center">
+                  <img
+                    src="/match.png"
+                    alt="Issues Together"
+                    className="h-16 w-16"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                </div>
+                <h3 className="font-mono text-lg font-bold text-foreground">
+                  Issues Together
+                </h3>
+                <p className="font-mono text-sm text-muted-foreground">
+                  Tackle GitHub issues together and level up your coding skills
+                </p>
+              </CardContent>
+            </Card>
           </div>
+
+          {/* GitHub Integration Showcase */}
+          <Card className="border-4 border-accent bg-accent/5 shadow-xl">
+            <CardContent className="p-8 space-y-4">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/github.png"
+                  alt="GitHub"
+                  className="h-12 w-12"
+                  style={{ imageRendering: "pixelated" }}
+                />
+                <h2 className="font-mono text-2xl font-bold text-primary">
+                  Solve Real GitHub Issues Together
+                </h2>
+              </div>
+              <p className="font-mono text-base text-foreground leading-relaxed">
+                Connect your GitHub account and browse open issues across{" "}
+                <span className="font-bold text-accent">
+                  thousands of projects
+                </span>
+                . Find issues that match your skills, pair with a compatible
+                developer, and{" "}
+                <span className="font-bold text-accent">
+                  contribute to real projects
+                </span>{" "}
+                while learning and building your portfolio.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-2">
+                <div className="inline-flex items-center gap-2 border-2 border-accent px-3 py-1 font-mono text-xs font-semibold bg-accent/20 text-accent-foreground rounded">
+                  <img
+                    src="/skill.png"
+                    alt="Skills"
+                    className="h-4 w-4"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                  Skill-Based Matching
+                </div>
+                <div className="inline-flex items-center gap-2 border-2 border-accent px-3 py-1 font-mono text-xs font-semibold bg-accent/20 text-accent-foreground rounded">
+                  <img
+                    src="/contribution.png"
+                    alt="Contributions"
+                    className="h-4 w-4"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                  Real Contributions
+                </div>
+                <div className="inline-flex items-center gap-2 border-2 border-accent px-3 py-1 font-mono text-xs font-semibold bg-accent/20 text-accent-foreground rounded">
+                  <img
+                    src="/pair_programming.png"
+                    alt="Collaboration"
+                    className="h-4 w-4"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                  Pair Programming
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* CTA */}
           <Card

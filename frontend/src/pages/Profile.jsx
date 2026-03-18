@@ -20,6 +20,12 @@ import {
   updatePassword,
   updateProfile,
 } from "@/api/user";
+import {
+  disconnectGitHub,
+  fetchGitHubStatus,
+  getGitHubConnectUrl,
+  syncGitHubRepos,
+} from "@/api/github";
 
 const experienceOptions = [
   { value: "BEGINNER", label: "Beginner" },
@@ -108,6 +114,13 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isConnectingGitHub, setIsConnectingGitHub] = useState(false);
+  const [isSyncingGitHub, setIsSyncingGitHub] = useState(false);
+  const [isDisconnectingGitHub, setIsDisconnectingGitHub] = useState(false);
+  const [githubStatus, setGithubStatus] = useState({
+    connected: false,
+    github: null,
+  });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -116,7 +129,10 @@ const Profile = () => {
 
     const loadProfile = async () => {
       try {
-        const data = await fetchMe();
+        const [data, githubData] = await Promise.all([
+          fetchMe(),
+          fetchGitHubStatus(),
+        ]);
         if (!isMounted) return;
         const user = data.user;
         if (!user) return;
@@ -129,6 +145,10 @@ const Profile = () => {
           avatar: user.avatar || "",
         });
         setAvatarPreview(user.avatar || "");
+        setGithubStatus({
+          connected: Boolean(githubData?.connected),
+          github: githubData?.github || null,
+        });
       } catch (err) {
         if (!isMounted) return;
         setError(err.response?.data?.message || "Failed to load profile.");
@@ -281,6 +301,76 @@ const Profile = () => {
       });
     } finally {
       setIsUpdatingPassword(false);
+    }
+  };
+
+  const handleGitHubConnect = async () => {
+    setIsConnectingGitHub(true);
+    setError("");
+
+    try {
+      const data = await getGitHubConnectUrl();
+      if (!data?.url) {
+        throw new Error("Failed to get GitHub authorization URL");
+      }
+      window.location.assign(data.url);
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to start GitHub OAuth flow.";
+      setError(errorMsg);
+      toast.error("GitHub connect failed", {
+        description: errorMsg,
+      });
+      setIsConnectingGitHub(false);
+    }
+  };
+
+  const handleGitHubSync = async () => {
+    setIsSyncingGitHub(true);
+    setError("");
+
+    try {
+      const data = await syncGitHubRepos();
+      const refreshed = await fetchGitHubStatus();
+      setGithubStatus({
+        connected: Boolean(refreshed?.connected),
+        github: refreshed?.github || null,
+      });
+      toast.success("GitHub synced", {
+        description: `${data?.reposCount || 0} repos synchronized`,
+      });
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.message || "Failed to sync GitHub repos.";
+      setError(errorMsg);
+      toast.error("GitHub sync failed", {
+        description: errorMsg,
+      });
+    } finally {
+      setIsSyncingGitHub(false);
+    }
+  };
+
+  const handleGitHubDisconnect = async () => {
+    setIsDisconnectingGitHub(true);
+    setError("");
+
+    try {
+      await disconnectGitHub();
+      setGithubStatus({ connected: false, github: null });
+      setForm((prev) => ({ ...prev, githubLink: "" }));
+      toast.success("GitHub disconnected");
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.message || "Failed to disconnect GitHub.";
+      setError(errorMsg);
+      toast.error("GitHub disconnect failed", {
+        description: errorMsg,
+      });
+    } finally {
+      setIsDisconnectingGitHub(false);
     }
   };
 
@@ -594,6 +684,80 @@ const Profile = () => {
                     </>
                   )}
                 </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-4 border-primary shadow-xl">
+              <CardContent className="space-y-4 p-6">
+                <div className="mb-2 border-b-2 border-primary pb-2">
+                  <span className="font-mono text-sm font-bold uppercase text-primary">
+                    GitHub Integration
+                  </span>
+                </div>
+
+                {githubStatus.connected ? (
+                  <div className="space-y-2 font-mono text-xs text-muted-foreground">
+                    <p>
+                      Connected as{" "}
+                      <span className="font-bold text-foreground">
+                        {githubStatus.github?.username || "Unknown"}
+                      </span>
+                    </p>
+                    <p>
+                      Repositories synced:{" "}
+                      <span className="font-bold text-foreground">
+                        {githubStatus.github?.reposCount || 0}
+                      </span>
+                    </p>
+                    {githubStatus.github?.lastSyncAt ? (
+                      <p>
+                        Last sync:{" "}
+                        {new Date(
+                          githubStatus.github.lastSyncAt,
+                        ).toLocaleString()}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="font-mono text-xs text-muted-foreground">
+                    Connect GitHub to unlock issue-based matching and sprint
+                    suggestions.
+                  </p>
+                )}
+
+                {!githubStatus.connected ? (
+                  <Button
+                    type="button"
+                    onClick={handleGitHubConnect}
+                    disabled={isConnectingGitHub}
+                    className="w-full border-4 border-border font-mono font-bold shadow-lg"
+                  >
+                    {isConnectingGitHub ? "Connecting..." : "Connect GitHub"}
+                  </Button>
+                ) : (
+                  <div className="grid gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleGitHubSync}
+                      disabled={isSyncingGitHub}
+                      className="w-full border-4 border-border font-mono font-bold shadow-lg"
+                    >
+                      {isSyncingGitHub ? "Syncing..." : "Sync GitHub Repos"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleGitHubDisconnect}
+                      disabled={isDisconnectingGitHub}
+                      className="w-full border-4 border-destructive/40 font-mono font-bold shadow-lg"
+                    >
+                      {isDisconnectingGitHub
+                        ? "Disconnecting..."
+                        : "Disconnect GitHub"}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

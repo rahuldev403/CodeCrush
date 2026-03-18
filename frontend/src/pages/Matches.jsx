@@ -1,18 +1,36 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import AppShell from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { fetchMatches } from "@/api/user";
+import { fetchMatches, removeConnection } from "@/api/user";
+import { createSocket } from "@/lib/socket";
 
 const Matches = () => {
   const [matches, setMatches] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [removingId, setRemovingId] = useState(null);
+
+  const handleRemoveConnection = async (matchId) => {
+    setRemovingId(matchId);
+    try {
+      await removeConnection(matchId);
+      setMatches((prev) => prev.filter((m) => m.matchId !== matchId));
+      toast.success("Connection removed");
+    } catch (err) {
+      toast.error("Failed to remove connection");
+      console.error(err);
+    } finally {
+      setRemovingId(null);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
+    const socket = createSocket();
 
     const loadMatches = async () => {
       setIsLoading(true);
@@ -32,8 +50,44 @@ const Matches = () => {
 
     loadMatches();
 
+    // Listen for real-time compatibility score updates
+    socket.on("compatibility-ready", (data) => {
+      if (!isMounted) return;
+      setMatches((prevMatches) =>
+        prevMatches.map((match) =>
+          match.matchId === data.matchId
+            ? {
+                ...match,
+                compatibilityScore: data.compatibilityScore,
+                compatibilitySummary: data.compatibilitySummary,
+              }
+            : match,
+        ),
+      );
+    });
+
+    // Listen for compatibility errors
+    socket.on("compatibility-error", (data) => {
+      if (!isMounted) return;
+      // Mark with error state if needed
+      console.error("Compatibility generation failed for match:", data.matchId);
+    });
+
+    // Listen for connection removal from other user
+    socket.on("connection-removed", (data) => {
+      if (!isMounted) return;
+      setMatches((prev) => prev.filter((m) => m.matchId !== data.matchId));
+      toast.info("Connection removed", {
+        description: "Your match was removed",
+      });
+    });
+
     return () => {
       isMounted = false;
+      socket.off("compatibility-ready");
+      socket.off("compatibility-error");
+      socket.off("connection-removed");
+      socket.disconnect();
     };
   }, []);
 
@@ -141,11 +195,23 @@ const Matches = () => {
                   </div>
                 ) : null}
 
-                <Link to={`/chat/${match.matchId}`}>
-                  <Button className="w-full border-4 border-border font-mono text-sm font-bold shadow-lg">
-                    Open chat →
+                <div className="flex gap-2">
+                  <Link to={`/chat/${match.matchId}`} className="flex-1">
+                    <Button className="w-full border-4 border-border font-mono text-sm font-bold shadow-lg">
+                      Open chat →
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="border-4 border-destructive font-mono"
+                    onClick={() => handleRemoveConnection(match.matchId)}
+                    disabled={removingId === match.matchId}
+                    title="Remove connection"
+                  >
+                    {removingId === match.matchId ? "..." : "✕"}
                   </Button>
-                </Link>
+                </div>
               </CardContent>
             </Card>
           ))}

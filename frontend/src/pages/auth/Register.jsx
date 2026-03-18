@@ -11,6 +11,7 @@ const Register = () => {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -23,8 +24,10 @@ const Register = () => {
     setIsSubmitting(true);
 
     try {
-      await register(form);
-      navigate("/onboarding");
+      const data = await register(form);
+      navigate("/verify-registration", {
+        state: { email: data?.email || form.email },
+      });
     } catch (err) {
       setError(
         err.response?.data?.message || "Registration failed. Try again.",
@@ -93,17 +96,27 @@ const Register = () => {
           >
             Password
           </Label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            placeholder="At least 6 chars"
-            value={form.password}
-            onChange={handleChange}
-            required
-            className="border-4 border-border font-mono shadow-md"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              placeholder="At least 6 chars"
+              value={form.password}
+              onChange={handleChange}
+              required
+              className="border-4 border-border font-mono shadow-md"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="border-4 border-border font-mono text-xs font-bold"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </Button>
+          </div>
         </div>
         {error ? (
           <div className="border-4 border-destructive bg-destructive/10 p-3 font-mono text-sm text-destructive shadow-lg">

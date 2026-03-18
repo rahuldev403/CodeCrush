@@ -11,6 +11,7 @@ const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -26,7 +27,12 @@ const Login = () => {
       await login(form);
       navigate("/feed");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed. Try again.");
+      const message = err.response?.data?.message || "Login failed. Try again.";
+      if (/verify your email/i.test(message)) {
+        navigate("/verify-registration", { state: { email: form.email } });
+        return;
+      }
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -75,17 +81,27 @@ const Login = () => {
           >
             Password
           </Label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            placeholder="••••••••"
-            value={form.password}
-            onChange={handleChange}
-            required
-            className="border-4 border-border font-mono shadow-md"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="••••••••"
+              value={form.password}
+              onChange={handleChange}
+              required
+              className="border-4 border-border font-mono shadow-md"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="border-4 border-border font-mono text-xs font-bold"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </Button>
+          </div>
         </div>
         {error ? (
           <div className="border-4 border-destructive bg-destructive/10 p-3 font-mono text-sm text-destructive shadow-lg">
